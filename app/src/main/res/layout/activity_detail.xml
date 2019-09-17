@@ -36,6 +36,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editText_firstName" />
 
+    <EditText
+            android:id="@+id/editText_height_feet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:hint="@string/height_feet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editText_lastName" />
+
     <Button
             android:id="@+id/button_save"
             android:layout_width="wrap_content"
@@ -45,6 +59,6 @@
             android:layout_marginTop="32dp"
             android:text="@string/save"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editText_lastName"/>
+            app:layout_constraintTop_toBottomOf="@+id/editText_height_feet"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

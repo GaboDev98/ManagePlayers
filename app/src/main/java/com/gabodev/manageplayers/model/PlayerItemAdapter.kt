@@ -28,12 +28,9 @@ internal class PlayerItemAdapter(private val playerList: List<Player>, private v
     internal inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         fun bind(player: Player) {
-            itemView.player_label.text = player.first_name
+            itemView.player_label.text = (player.first_name + " " + player.last_name)
             itemView.setOnClickListener {
-                Toast.makeText(
-                    itemView.context,
-                    "Name: " + player.first_name + " LastName: " + player.last_name,
-                    Toast.LENGTH_LONG).show()
+                Toast.makeText(itemView.context, "Name: " + player.first_name + " LastName: " + player.last_name, Toast.LENGTH_LONG).show()
                 val intent = Intent(context, DetailActivity::class.java)
                 intent.putExtra("id", player.id)
                 intent.putExtra("id_player", player.id_player)

@@ -10,8 +10,16 @@ import android.database.sqlite.SQLiteOpenHelper
 class DatabaseHandler (context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val CREATE_TABLE = "CREATE TABLE $TABLE_NAME " +
-                "($ID INTEGER PRIMARY Key, $ID_PLAYER INTEGER, $FIRST_NAME TEXT, $LAST_NAME TEXT)"
+        val CREATE_TABLE = "CREATE TABLE $TABLE_NAME (" +
+                "$ID INTEGER PRIMARY Key, " +
+                "$ID_PLAYER INTEGER, " +
+                "$FIRST_NAME TEXT, " +
+                "$LAST_NAME TEXT, " +
+                "$HEIGHT_FEET TEXT, " +
+                "$HEIGHT_INCHES TEXT, " +
+                "$POSITION TEXT, " +
+                "$WEIGHT_POUNDS TEXT " +
+            ")"
         db?.execSQL(CREATE_TABLE)
     }
 
@@ -22,7 +30,7 @@ class DatabaseHandler (context: Context) : SQLiteOpenHelper(context, DB_NAME, nu
     // Inserting (Creating) data
     fun addPlayer(player: Player): Boolean {
         var _success: Long = -1
-        var existPlayer: Player = getPlayerById(player.id)
+        var existPlayer: Player = getPlayerById(player.id_player)
         if (existPlayer.id > 0) {
             Log.v("DB_LOCAL", "ExistDB")
         } else {
@@ -32,6 +40,10 @@ class DatabaseHandler (context: Context) : SQLiteOpenHelper(context, DB_NAME, nu
             values.put(ID_PLAYER, player.id_player)
             values.put(FIRST_NAME, player.first_name)
             values.put(LAST_NAME, player.last_name)
+            values.put(HEIGHT_FEET, player.height_feet)
+            values.put(HEIGHT_INCHES, player.height_inches)
+            values.put(POSITION, player.position)
+            values.put(WEIGHT_POUNDS, player.weight_pounds)
             _success = db.insert(TABLE_NAME, null, values)
             db.close()
             Log.v("InsertedID", "$_success")
@@ -46,15 +58,19 @@ class DatabaseHandler (context: Context) : SQLiteOpenHelper(context, DB_NAME, nu
         values.put(ID_PLAYER, player.id_player)
         values.put(FIRST_NAME, player.first_name)
         values.put(LAST_NAME, player.last_name)
+        values.put(HEIGHT_FEET, player.height_feet)
+        values.put(HEIGHT_INCHES, player.height_inches)
+        values.put(POSITION, player.position)
+        values.put(WEIGHT_POUNDS, player.weight_pounds)
         val _success = db.update(TABLE_NAME, values, ID + "=?", arrayOf(player.id.toString())).toLong()
         db.close()
         return Integer.parseInt("$_success") != -1
     }
 
     // Get all players
-    fun getPlayerById(id: Int): Player {
+    fun getPlayerById(id_player: Int): Player {
         val db = readableDatabase
-        val selectALLQuery = "SELECT * FROM $TABLE_NAME WHERE Id = $id LIMIT 1"
+        val selectALLQuery = "SELECT * FROM $TABLE_NAME WHERE IdPlayer = $id_player LIMIT 1"
         val cursor = db.rawQuery(selectALLQuery, null)
         var player = Player()
         if (cursor != null) {
@@ -136,5 +152,9 @@ class DatabaseHandler (context: Context) : SQLiteOpenHelper(context, DB_NAME, nu
         private const val ID_PLAYER = "IdPlayer"
         private const val FIRST_NAME = "FirstName"
         private const val LAST_NAME = "LastName"
+        private const val HEIGHT_FEET = "HeightFeet"
+        private const val HEIGHT_INCHES = "HeightInches"
+        private const val POSITION = "Position"
+        private const val WEIGHT_POUNDS = "WeightPounds"
     }
 }

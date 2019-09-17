@@ -2,6 +2,7 @@
     <string name="app_name">ManagePlayers</string>
     <string name="f_name">First Name</string>
     <string name="l_name">Last Name</string>
+    <string name="height_feet">Height Feet</string>
     <string name="save">Save</string>
     <string name="show">Show</string>
 </resources>
