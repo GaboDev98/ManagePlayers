@@ -1,24 +1,22 @@
 package com.gabodev.manageplayers
 
-import retrofit2.Call
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import retrofit2.Retrofit
-import retrofit2.Response
-import retrofit2.Callback
-import com.google.gson.Gson
-import android.widget.Toast
-import android.view.ViewGroup
-import android.content.Context
-import android.widget.TextView
-import android.widget.BaseAdapter
-import android.view.LayoutInflater
-import com.gabodev.manageplayers.model.Result
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.gabodev.manageplayers.api.ApiService
+import com.gabodev.manageplayers.db.DatabaseHandler
+import com.gabodev.manageplayers.model.Player
+import com.gabodev.manageplayers.model.PlayerItemAdapter
+import com.google.gson.GsonBuilder
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlinx.android.synthetic.main.activity_main.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import io.reactivex.schedulers.Schedulers
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,82 +25,69 @@ class MainActivity : AppCompatActivity() {
     lateinit var service: ApiService
 
     // Init db
-    // val dbHandler = DatabaseHandler(this)
+    val dbHandler = DatabaseHandler(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        var listPlayers: List<Player>
+
         val retrofit: Retrofit = Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .baseUrl("https://www.balldontlie.io/api/v1/")
-            .addConverterFactory(GsonConverterFactory.create())
             .build()
 
         service = retrofit.create<ApiService>(ApiService::class.java)
 
-        getAllPlayers()
+        rv_list_players.layoutManager = LinearLayoutManager(this)
 
-        lv_players.adapter = ListMyAdapter(this)
+        var response = service.getAllPlayers()
 
-        lv_players.setOnItemClickListener { parent, view, position, id ->
+        response.observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribe ({ result ->
+                listPlayers = result.data as List<Player>
 
-            Toast.makeText(this, "Clicked item : $position", Toast.LENGTH_SHORT).show()
-            // Intent intent = new Intent(MainActivity.this, NextActivity.class);
-            // intent.putExtra("position", position);
-            // this.startActivity(intent);
-        }
-    }
+                listPlayers.forEach {
+                    val player = Player()
+                    var success: Boolean
+                    player.id_player = it.id
+                    player.first_name = it.first_name
+                    player.last_name = it.last_name
+                    success = dbHandler!!.addPlayer(player)
+                    if (success) {
+                        Log.d(TAG_LOGS,  (it.first_name + "  " + it.last_name)+ " se registró correctamente.")
+                    } else {
+                        Log.d(TAG_LOGS,  (it.first_name + "  " + it.last_name)+ " no se logró registrar correctamente.")
+                    }
+                }
 
-    fun getAllPlayers() {
-        // Sevicio que retorna el listado de jugadores
-        service.getAllPlayers().enqueue(object: Callback<Result> {
-            override fun onResponse(call: Call<Result>?, response: Response<Result>?) {
-                val result = response?.body()
-                Log.i(TAG_LOGS, Gson().toJson(result))
+                Log.d(TAG_LOGS, "Se encontraron ${result.data!!.size} jugadores en el servicio.")
+
+                var listPlayersBd = dbHandler.getAllPlayers()
+
+                Log.d(TAG_LOGS, "Se encontraron ${listPlayersBd.size} jugadores en la bd local.")
+
+                rv_list_players.adapter = PlayerItemAdapter(listPlayersBd, this)
+            }, {
+                    error -> error.printStackTrace()
+            })
+
+        searchBar.addTextChangeListener(object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) { }
+            override fun onTextChanged(charSequence: CharSequence, p1: Int, p2: Int, p3: Int) {
+                Log.d(TAG_LOGS, "onTextChanged: $charSequence")
+                // Results
+                var results = dbHandler.getAllPlayersByName(charSequence.toString())
+                // Count Results
+                Log.d(TAG_LOGS, "CountResults: ${results.size}")
+                // Search Filter
+                rv_list_players.adapter = PlayerItemAdapter(results, this@MainActivity)
             }
-            override fun onFailure(call: Call<Result>?, t: Throwable?) {
-                t?.printStackTrace()
-            }
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
         })
-    }
-
-    private class ListMyAdapter(context: Context) : BaseAdapter() {
-
-        internal var listPlayers = arrayOf("DeVaughn", "Ike", "Carmelo", "Ron")
-
-        private val mInflator: LayoutInflater = LayoutInflater.from(context)
-
-        override fun getCount(): Int {
-            return listPlayers.size
-        }
-
-        override fun getItem(position: Int): Any {
-            return listPlayers[position]
-        }
-
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View? {
-            val view: View?
-            val vh: ListRowHolder
-            if (convertView == null) {
-                view = this.mInflator.inflate(R.layout.player_list_item, parent, false)
-                vh = ListRowHolder(view)
-                view.tag = vh
-            } else {
-                view = convertView
-                vh = view.tag as ListRowHolder
-            }
-
-            vh.label.text = listPlayers[position]
-            return view
-        }
-    }
-
-    private class ListRowHolder(row: View?) {
-        val label: TextView = row?.findViewById(R.id.player_label) as TextView
     }
 }
